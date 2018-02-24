@@ -39,19 +39,14 @@
  ******************************************/
  
 const b = document.getElementById('waves');
-b.onclick = function(){
-	if ( params.fixHightDelta == false ){
-		params.fixHightDelta = true;
-	}else{
-		params.fixHightDelta = false; 
-	}	
+b.onclick = () => {
+	!params.fixHightDelta ? params.fixHightDelta = true : params.fixHightDelta = false; 
 };
 
 /*******************************************	
- *	IMPORTANT.
- *
- *	This params can be changed before
- *	loading window !	
+ *	IMPORTANT!
+ *	This params can be changed
+ *	only before loading window.	
  ******************************************/
 
 /**	If need LOGO in scene 
