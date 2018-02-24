@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+
+<canvas id="canvas-webgl" class="p-canvas-webgl"></canvas>
+
+<script src='jsScene/three.js'></script>
+<script src='jsScene/DigitalGlitch.js'></script>
+<script src='jsScene/EffectComposer.js'></script>
+<script src='jsScene/ShaderPass.js'></script>
+<script src='jsScene/GlitchPass.js'></script>
+<script src='jsScene/RenderPass.js'></script>
+<script src='jsScene/CopyShader.js'></script>
+<script src='jsScene/OBJLoader.js'></script>
+<script src="jsScene/load.js"></script>
+<script src="jsScene/scene.js"></script>
+
+
+<!--- CUSTOM CODE can be deleted ---------->
+<button 
+	id='waves' 
+	style='z-index: 100; 
+		position: absolute; 
+		top: 30px; 
+		left: 50px; 
+		display: block;'>
+	Waves
+</button>
+
+<script>
+
+/*******************************************	
+ *	If need FIX hight speed Waves change: 
+ *		'params.fixHightDelta = false'
+ *	on 'true' like here:                       
+ ******************************************/
+ 
+const b = document.getElementById('waves');
+b.onclick = function(){
+	if ( params.fixHightDelta == false ){
+		params.fixHightDelta = true;
+	}else{
+		params.fixHightDelta = false; 
+	}	
+};
+
+/*******************************************	
+ *	IMPORTANT.
+ *
+ *	This params can be changed before
+ *	loading window !	
+ ******************************************/
+
+/**	If need LOGO in scene 
+ * 	set'true' else 'false'   
+ */
+ params.isLogo = true;
+
+/**	If need SPHERE in scene
+ *	set 'true' else 'false'  
+ */	
+ params.isSphere = true;
+
+/** If need WAVES on screen 
+ *	set 'true' else 'false'  
+ */		 
+ params.isWavesScreen = true;
+
+/** If need GLITCJ on screen
+ * 	set 'true' else 'false'
+ */		
+ params.isGlitchScreen = true;
+
+</script>
+<!--- END CUSTOM CODE ------------------->
+
+
+</body>
+</html>
