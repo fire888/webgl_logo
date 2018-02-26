@@ -6,6 +6,7 @@
 
   varying vec3 vPosition;
   varying float vOpacity;
+  varying vec2 vUv;
 
   const float duration = 4.0;
   const float delay = 3.0;

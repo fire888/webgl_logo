@@ -20,7 +20,7 @@ const params = {
 	isSphere: true,
 	/** If need WAVES on screen 'true' else 'false'*/		
 	isWavesScreen: true,
-	/** If need GLITCJ on screen 'true' else 'false'*/		
+	/** If need GLITCH on screen 'true' else 'false'*/		
 	isGlitchScreen: true,
 
 	/** waves params */
@@ -250,12 +250,10 @@ THREE.WavesShader = {
 
 
 /**************************************************;
- * mouse move for waves
+ * check mouse move for waves
+ * and rotation logo
  **************************************************/
- 
-let windowW = document.documentElement.clientWidth;
-let windowH = document.documentElement.clientHeight;
-	  
+ 	  
 let mouseX = 0, mouseY = 0; 
 document.addEventListener("mousemove", (e) => {	 
 	 mouseX = e.offsetX;
@@ -268,6 +266,10 @@ document.addEventListener("mousemove", (e) => {
  **************************************************/
  
 const moreWaves = () => {
+	if (!params.isWavesScreen){
+		return; 
+	}
+	
 	if (sc.wavesShaderPass.uniforms.amount.value < params.lowAmount + params.hightDelta){
 		sc.wavesShaderPass.uniforms.amount.value += params.speedUp;
 		setTimeout(moreWaves, 60);
@@ -436,8 +438,7 @@ class Logo {
 						})
 					)
 					sc.logo.obj.scale.set(0.45, 0.45, 0.45);
-					setTimeout( sc.logo.removeDoubleSide, 8000);
-							
+					
 					sc.logo.loadOn();					
 				}		
 			}		
@@ -447,21 +448,9 @@ class Logo {
 	
   render(time) {
 	this.uniforms.time.value += time;
-    this.vectorMouse.x = (mouseX-windowW/2)/15;
-    this.vectorMouse.y = (windowH/2-mouseY)/15;
-	if (Math.abs(this.vectorMouse.x)< 7 && Math.abs(this.vectorMouse.y)<7){
-		if ( this.uniforms.noiseAmount.value < 50.0 * params.logoDisp ){
-			this.uniforms.noiseAmount.value += 2.0
-		}		
-	}else{
-		if ( this.uniforms.noiseAmount.value > 2.0 * params.logoDisp )
-		this.uniforms.noiseAmount.value -= 1.0;			
-	}	
+    this.vectorMouse.x = (mouseX-window.innerWidth/2)/15;
+    this.vectorMouse.y = (window.innerHeight/2-mouseY)/15;	
 	this.obj.lookAt(this.vectorMouse);		
-  }
-  
-  removeDoubleSide(){
-	sc.logo.obj.material.side = THREE.FrontSide;
   }	  
 }
 
@@ -476,7 +465,10 @@ class SkyOctahedronShell {
       time: {
         type: 'f',
         value: 0
-      },	  
+      },
+	  iResolution: {
+		  type: "v2", 
+		  value: new THREE.Vector2(0.3, 0.5) }	  
     };
     this.obj = this.createObj();
 	this.obj.position.z = 30;
@@ -487,6 +479,7 @@ class SkyOctahedronShell {
     const geometry = new THREE.OctahedronBufferGeometry(120, 5);
     return new THREE.Mesh(
       geometry,
+	 // new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
       new THREE.RawShaderMaterial({
         uniforms: this.uniforms,
         vertexShader: sc.shaders['jsScene/shader_sphere.vs'],
@@ -500,6 +493,8 @@ class SkyOctahedronShell {
   
   render(time) {
     this.uniforms.time.value += time;
+	this.uniforms.iResolution.value.x = 1000.0;
+	this.uniforms.iResolution.value.y = 1000.0;	
   }
 }
 
@@ -534,9 +529,6 @@ function main( on ){
 	sc.renderer.gammaOutput = true;
 
     sc.scene = new THREE.Scene();
-	
-	var width = window.innerWidth || 2;
-	var height = window.innerHeight || 2;
 	sc.camera = new THREE.PerspectiveCamera( 35,
 			window.innerWidth/window.innerHeight, 
             0.1, 
@@ -545,27 +537,27 @@ function main( on ){
 
 	sc.camera.position.set( 0, 5, 350 );
 	sc.camera.lookAt( sc.scene.position );
-	        
-	sc.composer = new THREE.EffectComposer( sc.renderer );	
+	 
+	if ( params.isGlitchScreen || params.isWavesScreen){		
+		sc.composer = new THREE.EffectComposer( sc.renderer );	
+	}
 	
 	if (params.isWavesScreen){
 		sc.wavesShaderPass = new THREE.ShaderPass(THREE.WavesShader);
 		sc.composer.addPass( sc.wavesShaderPass );	
 	}	
 	
-
 	sc.glitchPass = new THREE.GlitchPass(35, 195, 48, 120, 200, 200 );	
 	
 	sc.glitchPass.renderToScreen = true;
 	if (params.isGlitchScreen){		
 		sc.glitchPass.goWild = true;
 	}	
-	sc.composer.addPass( sc.glitchPass );
-	sc.composer.addPass( new THREE.RenderPass( sc.scene, sc.camera ) );
-
+	if ( params.isGlitchScreen || params.isWavesScreen){
+		sc.composer.addPass( sc.glitchPass );
+		sc.composer.addPass( new THREE.RenderPass( sc.scene, sc.camera ) );
+	}	
 	sc.clock = new THREE.Clock();
-	sc.loader = new THREE.ObjectLoader();
-	
 	on();	
 }
 
@@ -576,12 +568,16 @@ function main( on ){
   
 function animate() {
 
-	sc.renderer.render( sc.scene, sc.camera );		
+	sc.renderer.render( sc.scene, sc.camera );
+
 	const time = sc.clock.getDelta();		
 	if (sc.logo){
 		if (sc.logo.obj){
 			sc.logo.render(time);
 		}		
+	}
+	if ( sc.skyOctahedronShell ){
+		sc.skyOctahedronShell.render(time);
 	}		
 	if (params.isWavesScreen){
 		sc.wavesShaderPass.uniforms.time.value += time*0.05;		
@@ -596,14 +592,11 @@ function animate() {
 			}
 			params.oldFixHightDelta = params.fixHightDelta;
 		}
-	}				
-	if ( sc.skyOctahedronShell ){
-		sc.skyOctahedronShell.render(time);
-	}		
+	}					
 	if (params.isWavesScreen || params.isGlitchScreen ){
 		sc.composer.render();
 	}
-
+	
 	requestAnimationFrame( animate );	
 }
 
@@ -611,17 +604,11 @@ function animate() {
 /**************************************************;
  * resize scene
  **************************************************/
+
   
 function handleWindowResize() {
-	
-	windowW = window.innerWidth;
-	windowH = window.innerHeight;	
-	
-	let HEIGHT = window.innerHeight;
-	let WIDTH = window.innerWidth;
-	
-	sc.renderer.setSize(WIDTH, HEIGHT);
-	sc.camera.aspect = WIDTH / HEIGHT;
+	sc.renderer.setSize(window.innerWidth, window.innerHeight);
+	sc.camera.aspect = window.innerWidth / window.innerHeight;
 	sc.camera.updateProjectionMatrix();
 }
 
