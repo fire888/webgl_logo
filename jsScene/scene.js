@@ -41,58 +41,82 @@ const params = {
  * LOAD SCENE
  **************************************************/
 
-const loadScene = new Promise( 
-	function (resolve, reject){	
+function listenerWindowOnload(){
+    return new Promise((resolve) => {
 		window.onload = function(){
 			resolve();
 		};
-	}).then(		
-		function(){	
-			return new Promise( 
-				function(resolve, reject){
-					loadFiles([
-						'jsScene/shader_logo.vs',
-						'jsScene/shader_logo.fs',
-						'jsScene/shader_sphere.vs',	
-						'jsScene/shader_sphere.fs',					
-					], loadGeomShaders, ()=>{resolve(); } );
-				});
-		},
-		function(){
-			console.log('window no loading');			
-		}	
-	).then( 
-		function(v){
-			main( ()=>{} );
-			if (params.isSphere){	
-				sc.skyOctahedronShell = new SkyOctahedronShell();
-				sc.scene.add(sc.skyOctahedronShell.obj);
-			}	
-			animate();						
-			return ( new Promise(  
-				function(resolve, reject){
-					if (params.isLogo){
-						sc.logo = new Logo( ()=>{ resolve(); } );
-					}else{
-						resolve();
-					}		
-				} ) 
-			);
-		},	
-		function (){
-			console.log('error load-shaders or init scene');
-		}	
-	).then( 
-		function(v){
-			if (params.isLogo){
-				sc.scene.add(sc.logo.obj);
-			}				
-		},	
-		function (){		
-			console.log('error init spheres or init logo');
-		}	
-	);
-		
+    });
+}
+
+function init3dScene(){
+	return new Promise((resolve) => {
+		initScene();
+		animate();
+		resolve();
+	});
+}; 
+
+function loadShaders(){
+    return new Promise((resolve) => {
+		loadFiles([
+			'jsScene/shader_logo.vs',
+			'jsScene/shader_logo.fs',
+			'jsScene/shader_sphere.vs',	
+			'jsScene/shader_sphere.fs',					
+		], loadGeomShaders, ()=>{resolve();} );
+	});
+};
+
+function initAddSphere(){
+	if (params.isSphere){	
+		sc.skyOctahedronShell = new SkyOctahedronShell();
+		sc.scene.add(sc.skyOctahedronShell.obj);
+	}
+};
+
+function loadLogo(){
+	return new Promise((resolve) => {
+		if (params.isLogo){
+			sc.logo = new Logo( ()=>{ resolve(); } );
+		}else{
+			resolve();
+		}		
+	});
+};
+
+function addLogo(){
+	if (params.isLogo){
+		sc.scene.add(sc.logo.obj);	
+	}	
+};
+
+function loaderScene(){
+    return listenerWindowOnload()
+        .then(() => {
+            console.log('windowOnload');
+            return init3dScene();
+        })
+        .then(() => {
+            console.log('Sceneinit');
+            return loadShaders();
+        })
+		.then(() => {
+            console.log('ShadersLoaded');			
+			initAddSphere();
+			return loadLogo();
+		})
+		.then(() => {
+			console.log('addSphere');
+			return addLogo();
+		})
+		.then( () => {
+			console.log('addLogo');
+		});			
+};
+
+loaderScene();
+
 
 /**************************************************;
  * Shaders
@@ -102,6 +126,7 @@ const loadScene = new Promise(
     if (err) {
       throw err;
     }
+	console.log('loadShON');
 	sc.shaders = files;
 	on();	
 }
@@ -395,53 +420,58 @@ class Logo {
 	this.loader = new THREE.OBJLoader( );
 	this.loader.load( 'jsScene/logo.obj', function ( object ) {	
 		object.traverse( function ( child ) {
-			if ( child instanceof THREE.Mesh){
-				if( typeof child.geometry.attributes.position.array == "object" ){ 
-					const geometry = new THREE.Geometry().fromBufferGeometry(child.geometry);	
-					const positions = child.geometry.attributes.position.array;
-					const faceNormalsBase = [];
-					const centersBase = [];
-					const delaysBase = [];
-					for (var i = 0; i < positions.length; i += 9) {
-						const n = computeFaceNormal(
-							[positions[i + 0], positions[i + 1], positions[i + 2]],
-							[positions[i + 3], positions[i + 4], positions[i + 5]],
-							[positions[i + 6], positions[i + 7], positions[i + 8]]
-						);
-						faceNormalsBase.push(n[0], n[1], n[2], n[0], n[1], n[2], n[0], n[1], n[2]);
-						const c = [
-							(positions[i + 0] + positions[i + 3] + positions[i + 6]) / 3,
-							(positions[i + 1] + positions[i + 4] + positions[i + 7]) / 3,
-							(positions[i + 2] + positions[i + 5] + positions[i + 8]) / 3
-						];
-						const delay = Math.random() * 0.5;
-						centersBase.push(c[0], c[1], c[2], c[0], c[1], c[2], c[0], c[1], c[2]);
-						delaysBase.push(delay, delay, delay);
-					}
+			if ( child instanceof THREE.Mesh != true){
+				return;
+			}	
+			if( typeof child.geometry.attributes.position.array != "object" ){ 
+				return;
+			}	
+			
+			const geometry = new THREE.Geometry().fromBufferGeometry(child.geometry);	
+			const positions = child.geometry.attributes.position.array;
+			const faceNormalsBase = [];
+			const centersBase = [];
+			const delaysBase = [];
+			for (var i = 0; i < positions.length; i += 9) {
+				const n = computeFaceNormal(
+					[positions[i + 0], positions[i + 1], positions[i + 2]],
+					[positions[i + 3], positions[i + 4], positions[i + 5]],
+					[positions[i + 6], positions[i + 7], positions[i + 8]]
+				);
+				faceNormalsBase.push(n[0], n[1], n[2], n[0], n[1], n[2], n[0], n[1], n[2]);
+				const c = [
+					(positions[i + 0] + positions[i + 3] + positions[i + 6]) / 3,
+					(positions[i + 1] + positions[i + 4] + positions[i + 7]) / 3,
+					(positions[i + 2] + positions[i + 5] + positions[i + 8]) / 3
+				];
+				const delay = Math.random() * 0.5;
+					centersBase.push(c[0], c[1], c[2], c[0], c[1], c[2], c[0], c[1], c[2]);
+					delaysBase.push(delay, delay, delay);
+				}
 							
-					const faceNormals = new Float32Array(faceNormalsBase);
-					const centers = new Float32Array(centersBase);
-					const delays = new Float32Array(delaysBase);
-					child.geometry.addAttribute('faceNormal', new THREE.BufferAttribute(faceNormals, 3));
-					child.geometry.addAttribute('center', new THREE.BufferAttribute(centers, 3));
-					child.geometry.addAttribute('delay', new THREE.BufferAttribute(delays, 1));	
+			const faceNormals = new Float32Array(faceNormalsBase);
+			const centers = new Float32Array(centersBase);
+			const delays = new Float32Array(delaysBase);
+			child.geometry.addAttribute('faceNormal', new THREE.BufferAttribute(faceNormals, 3));
+			child.geometry.addAttribute('center', new THREE.BufferAttribute(centers, 3));
+			child.geometry.addAttribute('delay', new THREE.BufferAttribute(delays, 1));	
 		
-					sc.logo.obj = new THREE.Mesh(
-						child.geometry,
-						new THREE.RawShaderMaterial({
-							uniforms: sc.logo.uniforms,
-							vertexShader: sc.shaders["jsScene/shader_logo.vs"],
-							fragmentShader: sc.shaders["jsScene/shader_logo.fs"],
-							flatShading: true,
-							transparent: true,
-							side: THREE.DoubleSide
-						})
-					)
-					sc.logo.obj.scale.set(0.45, 0.45, 0.45);
-					
-					sc.logo.loadOn();					
-				}		
-			}		
+			sc.logo.obj = new THREE.Mesh(
+				child.geometry,
+				new THREE.RawShaderMaterial({
+					uniforms: sc.logo.uniforms,
+					vertexShader: sc.shaders["jsScene/shader_logo.vs"],
+					fragmentShader: sc.shaders["jsScene/shader_logo.fs"],
+					flatShading: true,
+					transparent: true,
+					side: THREE.DoubleSide
+				})
+			)
+			sc.logo.obj.scale.set(0.45, 0.45, 0.45);
+			console.log("logoON");	
+
+			sc.logo.loadOn();
+			
 		});		
 	});  
   }
@@ -472,11 +502,12 @@ class SkyOctahedronShell {
     };
     this.obj = this.createObj();
 	this.obj.position.z = 30;
+	this.obj.rotation.y = 30;
 	
   }
   
   createObj() {
-    const geometry = new THREE.OctahedronBufferGeometry(120, 5);
+    const geometry = new THREE.SphereGeometry( 120, 30, 30 );
     return new THREE.Mesh(
       geometry,
 	 // new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
@@ -492,6 +523,7 @@ class SkyOctahedronShell {
   }
   
   render(time) {
+	 this.obj.rotation.y += 0.005; 
     this.uniforms.time.value += time;
 	this.uniforms.iResolution.value.x = 1000.0;
 	this.uniforms.iResolution.value.y = 1000.0;	
@@ -519,7 +551,7 @@ const sc = {
 	skyOctahedronShell: false	
 }; 
  
-function main( on ){ 
+function initScene(){ 
 	
 	const canvas = document.getElementById('canvas-webgl');
 	sc.renderer = new THREE.WebGLRenderer({ canvas: canvas} );
@@ -557,8 +589,8 @@ function main( on ){
 		sc.composer.addPass( sc.glitchPass );
 		sc.composer.addPass( new THREE.RenderPass( sc.scene, sc.camera ) );
 	}	
-	sc.clock = new THREE.Clock();
-	on();	
+	sc.clock = new THREE.Clock();	
+	console.log('initsceneDone');
 }
 
 

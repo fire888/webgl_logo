@@ -17,9 +17,9 @@ float circle(vec2 p, float r) {
 float r3 = sqrt(3.0);
 
 void main() {
-	vec2 uv =  vPosition.xy;
-	uv.x *= -1.0+2.0*vPosition.x/vPosition.y;	
-	uv *= 15.0;
+	vec2 uv;// =  - 1.0 + 2.0 * vPosition.xy;
+	uv.x = - 1.0 + 2.0 * (vPosition.x*7.0+vPosition.z*10.0);	
+	uv.y = - 1.0 + 2.0 * (vPosition.y*7.0-vPosition.z*10.0);	
 	float r = smoothstep(-0.2, 0.7, sin(time*1.57-length(uv)*0.1))+1.0;
 	vec2 rep = vec2(4.0,r3*4.0);
 	vec2 p1 = mod(uv, rep)-rep*0.5;
@@ -41,7 +41,7 @@ void main() {
 	c += circle(p7, r);
 	c += circle(p8 , r);
 	vec3 rgb = vec3(hsv(r+20.7, 1.0, c));
-	gl_FragColor = vec4(rgb.x*7.0, rgb.y*0.7, rgb.z*1.3, 1.5/rgb.x*rgb.y*rgb.z);
+	gl_FragColor = vec4( -0.2+(rgb.x)*0.2, rgb.z*0.2, rgb.z*0.3, -0.4+rgb.z*rgb.x);
 }
   		
 
