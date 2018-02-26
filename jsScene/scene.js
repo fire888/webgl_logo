@@ -42,77 +42,77 @@ const params = {
  **************************************************/
 
 function listenerWindowOnload(){
-    return new Promise((resolve) => {
-		window.onload = function(){
-			resolve();
-		};
-    });
+  return new Promise((resolve) => {
+    window.onload = function(){
+      resolve();
+    };
+  });
 }
 
 function init3dScene(){
-	return new Promise((resolve) => {
-		initScene();
-		animate();
-		resolve();
-	});
+  return new Promise((resolve) => {
+    initScene();
+    animate();
+    resolve();
+  });
 }; 
 
 function loadShaders(){
-    return new Promise((resolve) => {
-		loadFiles([
-			'jsScene/shader_logo.vs',
-			'jsScene/shader_logo.fs',
-			'jsScene/shader_sphere.vs',	
-			'jsScene/shader_sphere.fs',					
-		], loadGeomShaders, ()=>{resolve();} );
-	});
+  return new Promise((resolve) => {
+    loadFiles([
+      'jsScene/shader_logo.vs',
+      'jsScene/shader_logo.fs',
+      'jsScene/shader_sphere.vs',	
+      'jsScene/shader_sphere.fs',					
+    ], loadGeomShaders, ()=> { resolve(); } );
+  });
 };
 
 function initAddSphere(){
-	if (params.isSphere){	
-		sc.skyOctahedronShell = new SkyOctahedronShell();
-		sc.scene.add(sc.skyOctahedronShell.obj);
-	}
+  if (params.isSphere){	
+    sc.skyOctahedronShell = new SkyOctahedronShell();
+    sc.scene.add(sc.skyOctahedronShell.obj);
+  }
 };
 
 function loadLogo(){
-	return new Promise((resolve) => {
-		if (params.isLogo){
-			sc.logo = new Logo( ()=>{ resolve(); } );
-		}else{
-			resolve();
-		}		
-	});
+  return new Promise((resolve) => {
+    if (params.isLogo){
+      sc.logo = new Logo( ()=>{ resolve(); } );
+    }else{
+      resolve();
+    }		
+  });
 };
 
 function addLogo(){
-	if (params.isLogo){
-		sc.scene.add(sc.logo.obj);	
-	}	
+  if (params.isLogo){
+    sc.scene.add(sc.logo.obj);	
+  }	
 };
 
 function loaderScene(){
-    return listenerWindowOnload()
-        .then(() => {
-            console.log('windowOnload');
-            return init3dScene();
-        })
-        .then(() => {
-            console.log('Sceneinit');
-            return loadShaders();
-        })
-		.then(() => {
-            console.log('ShadersLoaded');			
-			initAddSphere();
-			return loadLogo();
-		})
-		.then(() => {
-			console.log('addSphere');
-			return addLogo();
-		})
-		.then( () => {
-			console.log('addLogo');
-		});			
+  return listenerWindowOnload()
+    .then(() => {
+      console.log('windowOnload');
+      return init3dScene();
+    })
+    .then(() => {
+       console.log('Sceneinit');
+       return loadShaders();
+    })
+    .then(() => {
+       console.log('ShadersLoaded');			
+       initAddSphere();
+       return loadLogo();
+    })
+    .then(() => {
+       console.log('addSphere, loadLogo');
+       return addLogo();
+    })
+    .then( () => {
+       console.log('addLogo');
+    });			
 };
 
 loaderScene();
